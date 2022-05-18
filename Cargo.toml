@@ -7,3 +7,4 @@ edition = "2021"
 
 [dependencies]
 dxgcap = "0.2.4"
+iced = {version = "0.4.2", features = ["image"]}
