@@ -37,10 +37,10 @@ impl Sandbox for ScreenViewer {
         let temp = &mut screen.capture_frame().unwrap();
         let temp2 = &mut Vec::new();
         for rbga in &temp.0 {
-            temp2.push(rbga.a);
             temp2.push(rbga.b);
             temp2.push(rbga.g);
             temp2.push(rbga.r);
+            temp2.push(rbga.a);
         }
         Column::new()
             .padding(20)
