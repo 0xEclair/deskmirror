@@ -1,7 +1,7 @@
 #![feature(vec_into_raw_parts)]
 
 use iced::{Element, Settings, Sandbox, Column, Text, Alignment};
-use dxgcap::DXGIManager;
+use dxgcap::{BGRA8, DXGIManager};
 
 struct ScreenViewer {
     size: (u32, u32)
@@ -37,22 +37,24 @@ impl Sandbox for ScreenViewer {
     fn view(&mut self) -> Element<'_, Self::Message> {
         let screen = &mut DXGIManager::new(1000 * 60).unwrap();
         let temp = screen.capture_frame().unwrap();
-
-        let pixels = unsafe {
-            let (a, b, c) = temp.0.into_raw_parts();
-            let ptr = a as *mut u8;
-            Vec::from_raw_parts(ptr, 4*b, 4*c)
-        };
         Column::new()
             .padding(20)
             .align_items(Alignment::Center)
             .push(Text::new(self.size.0.to_string()).size(50))
             .push(Text::new(self.size.1.to_string()).size(50))
-            .push(iced::Image::new(iced::image::Handle::from_pixels(self.size.0, self.size.1,  pixels)))
+            .push(iced::Image::new(iced::image::Handle::from_pixels(self.size.0, self.size.1,  pixels_from(temp.0))))
             .into()
     }
 }
 
 fn main() -> iced::Result {
     ScreenViewer::run(Settings::default())
+}
+
+fn pixels_from(vec: Vec<BGRA8>) -> Vec<u8> {
+    unsafe {
+        let(a, b, c) = vec.into_raw_parts();
+        let ptr = a as *mut u8;
+        Vec::from_raw_parts(ptr, 4*b, 4*c)
+    }
 }
