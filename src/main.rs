@@ -1,49 +1,63 @@
 #![feature(vec_into_raw_parts)]
 
-use iced::{Element, Settings, Sandbox, Column, Text, Alignment};
+use iced::{Element, Settings, Column, Text, Alignment, image, Application, Subscription, Command};
 use dxgcap::{BGRA8, DXGIManager};
 
 struct ScreenViewer {
-    size: (u32, u32)
+    size: (u32, u32),
+    screen: image::Handle,
+    dxgi: DXGIManager
 }
 
-impl Sandbox for ScreenViewer {
-    type Message = String;
+impl Application for ScreenViewer {
+    type Executor = iced::executor::Default;
+    type Message = ();
+    type Flags = ();
 
-    fn new() -> Self {
-        let screen = &mut DXGIManager::new(1000 * 60).unwrap();
-        let temp = screen.capture_frame().unwrap();
-        ScreenViewer{
-            size: (temp.1.0 as u32, temp.1.1 as u32),
-        }
+    fn new(_: Self::Flags) -> (Self, Command<()>) {
+        let mut dxgi_manager = DXGIManager::new(1000 * 60).unwrap();
+        let temp = dxgi_manager.capture_frame().unwrap();
+        let width = temp.1.0 as u32;
+        let height = temp.1.1 as u32;
+        (
+            ScreenViewer{
+                size: (width, height),
+                screen: image::Handle::from_pixels(width, height, pixels_from(temp.0)),
+                dxgi: dxgi_manager
+            },
+            Command::none()
+        )
     }
 
     fn title(&self) -> String {
         String::from("deskmirror")
     }
 
-    fn update(&mut self, message: Self::Message) {
+    fn update(&mut self, message: Self::Message) -> Command<()> {
         match message {
             _ => {
 
             }
         }
-        let screen = &mut DXGIManager::new(1000 * 60).unwrap();
-        let temp = screen.capture_frame().unwrap();
-        println!("each frame of the monitor has: {:?} bytes", temp.0.len());
-        println!("its resolution is: {:?} * {:?}", temp.1.0, temp.1.1);
+        let temp = self.dxgi.capture_frame().unwrap();
+        self.screen = image::Handle::from_pixels(self.size.0, self.size.1, pixels_from(temp.0));
+        Command::none()
     }
 
     fn view(&mut self) -> Element<'_, Self::Message> {
-        let screen = &mut DXGIManager::new(1000 * 60).unwrap();
-        let temp = screen.capture_frame().unwrap();
         Column::new()
             .padding(20)
             .align_items(Alignment::Center)
             .push(Text::new(self.size.0.to_string()).size(50))
             .push(Text::new(self.size.1.to_string()).size(50))
-            .push(iced::Image::new(iced::image::Handle::from_pixels(self.size.0, self.size.1,  pixels_from(temp.0))))
+            .push(image::Image::new(self.screen.clone()))
             .into()
+    }
+
+    fn subscription(&self) -> Subscription<Self::Message> {
+        iced::time::every(std::time::Duration::from_millis(50)).map(|_|{
+            ()
+        })
     }
 }
 
