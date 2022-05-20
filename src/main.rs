@@ -44,7 +44,7 @@ impl Sandbox for ScreenViewer {
             .align_items(Alignment::Center)
             .push(Text::new(self.size.0.to_string()).size(50))
             .push(Text::new(self.size.1.to_string()).size(50))
-            .push(iced::Image::new(iced::image::Handle::from_pixels(self.size.0, self.size.1,  pixels_from(vec![]))))
+            .push(&self.image)
             .into()
     }
 }
