@@ -1,10 +1,11 @@
 #![feature(vec_into_raw_parts)]
 
-use iced::{Element, Settings, Sandbox, Column, Text, Alignment};
+use iced::{Element, Settings, Sandbox, Column, Text, Alignment, image};
 use dxgcap::{BGRA8, DXGIManager};
 
 struct ScreenViewer {
-    size: (u32, u32)
+    size: (u32, u32),
+    image: image::Image
 }
 
 impl Sandbox for ScreenViewer {
@@ -13,8 +14,11 @@ impl Sandbox for ScreenViewer {
     fn new() -> Self {
         let screen = &mut DXGIManager::new(1000 * 60).unwrap();
         let temp = screen.capture_frame().unwrap();
+        let width = temp.1.0 as u32;
+        let height = temp.1.1 as u32;
         ScreenViewer{
-            size: (temp.1.0 as u32, temp.1.1 as u32),
+            size: (width, height),
+            image: image::Image::new(image::Handle::from_pixels(width, height, pixels_from(temp.0)))
         }
     }
 
@@ -35,14 +39,12 @@ impl Sandbox for ScreenViewer {
     }
 
     fn view(&mut self) -> Element<'_, Self::Message> {
-        let screen = &mut DXGIManager::new(1000 * 60).unwrap();
-        let temp = screen.capture_frame().unwrap();
         Column::new()
             .padding(20)
             .align_items(Alignment::Center)
             .push(Text::new(self.size.0.to_string()).size(50))
             .push(Text::new(self.size.1.to_string()).size(50))
-            .push(iced::Image::new(iced::image::Handle::from_pixels(self.size.0, self.size.1,  pixels_from(temp.0))))
+            .push(iced::Image::new(iced::image::Handle::from_pixels(self.size.0, self.size.1,  pixels_from(vec![]))))
             .into()
     }
 }
